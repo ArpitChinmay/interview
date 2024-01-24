@@ -80,23 +80,28 @@ func GetSepecificCandidateDetails(c *gin.Context) {
 					c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
 				}
 				c.JSON(http.StatusOK, datacount)
+			} else {
+				detailsOfCandidatesDTO, _, err := getSelectedCandidateInterviewDetailsAtLevelOne(c)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+				}
+				c.JSON(http.StatusOK, detailsOfCandidatesDTO)
 			}
-			detailsOfCandidatesDTO, _, err := getSelectedCandidateInterviewDetailsAtLevelOne(c)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
-			}
-			c.JSON(http.StatusOK, detailsOfCandidatesDTO)
+
 		} else {
-			_, datacount, err := getRejectedCandidateInterviewDetailsAtLevelOne(c)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+			if count {
+				_, datacount, err := getRejectedCandidateInterviewDetailsAtLevelOne(c)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+				}
+				c.JSON(http.StatusOK, datacount)
+			} else {
+				detailsOfCandidatesDTO, _, err := getRejectedCandidateInterviewDetailsAtLevelOne(c)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+				}
+				c.JSON(http.StatusOK, detailsOfCandidatesDTO)
 			}
-			c.JSON(http.StatusOK, datacount)
-			detailsOfCandidatesDTO, _, err := getRejectedCandidateInterviewDetailsAtLevelOne(c)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
-			}
-			c.JSON(http.StatusOK, detailsOfCandidatesDTO)
 		}
 	} else if level == 2 {
 		if selected {
@@ -106,32 +111,57 @@ func GetSepecificCandidateDetails(c *gin.Context) {
 					c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
 				}
 				c.JSON(http.StatusOK, datacount)
+			} else {
+				detailsOfCandidatesDTO, _, err := getSelectedCandidateInterviewDetailsAtLevelTwo(c)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+				}
+				c.JSON(http.StatusOK, detailsOfCandidatesDTO)
 			}
-			detailsOfCandidatesDTO, _, err := getSelectedCandidateInterviewDetailsAtLevelTwo(c)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
-			}
-			c.JSON(http.StatusOK, detailsOfCandidatesDTO)
 		} else {
-			detailsOfCandidatesDTO, _, err := getRejectedCandidateInterviewDetailsAtLevelTwo(c)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+			if count {
+				_, datacount, err := getRejectedCandidateInterviewDetailsAtLevelTwo(c)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+				}
+				c.JSON(http.StatusOK, datacount)
+			} else {
+				detailsOfCandidatesDTO, _, err := getRejectedCandidateInterviewDetailsAtLevelTwo(c)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+				}
+				c.JSON(http.StatusOK, detailsOfCandidatesDTO)
 			}
-			c.JSON(http.StatusOK, detailsOfCandidatesDTO)
 		}
 	} else if level == 3 {
 		if selected {
-			detailsOfCandidatesDTO, _, err := getSelectedCandidateInterviewDetailsAtLevelThree(c)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+			if count {
+				_, datacount, err := getSelectedCandidateInterviewDetailsAtLevelThree(c)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+				}
+				c.JSON(http.StatusOK, datacount)
+			} else {
+				detailsOfCandidatesDTO, _, err := getSelectedCandidateInterviewDetailsAtLevelThree(c)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+				}
+				c.JSON(http.StatusOK, detailsOfCandidatesDTO)
 			}
-			c.JSON(http.StatusOK, detailsOfCandidatesDTO)
 		} else {
-			detailsOfCandidatesDTO, _, err := getRejectedCandidateInterviewDetailsAtLevelThree(c)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+			if count {
+				_, datacount, err := getRejectedCandidateInterviewDetailsAtLevelThree(c)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+				}
+				c.JSON(http.StatusOK, datacount)
+			} else {
+				detailsOfCandidatesDTO, _, err := getRejectedCandidateInterviewDetailsAtLevelThree(c)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+				}
+				c.JSON(http.StatusOK, detailsOfCandidatesDTO)
 			}
-			c.JSON(http.StatusOK, detailsOfCandidatesDTO)
 		}
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "wrong request params..."})
