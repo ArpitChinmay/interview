@@ -6,9 +6,8 @@ import (
 	"errors"
 	"log"
 
-	"interview-dashboard/db/datareader"
-	"interview-dashboard/models"
-
+	"github.com/ArpitChinmay/interview/db/datareader"
+	"github.com/ArpitChinmay/interview/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -26,6 +25,83 @@ func (handler *InterviewHandler) GetSelectedAndRejectedCandidatesAtLevelOne(c *g
 	var err error
 	handler = NewInterviewHandler(c, db)
 	handler.interviewDetails, err = handler.reader.ReadInterviewDataForLevelOneSelecteOrRejected(db)
+	if err != nil {
+		log.Fatal(err)
+		return nil, 0, errors.New("An error occurred while fetching the data")
+	}
+	return handler.interviewDetails, len(handler.interviewDetails), nil
+}
+
+func (handler *InterviewHandler) GetSelectedAndRejectedCandidatesAtLevelTwo(c *gin.Context, db *sql.DB) ([]models.Interview, int, error) {
+	var err error
+	handler = NewInterviewHandler(c, db)
+	handler.interviewDetails, err = handler.reader.ReadInterviewDataForLevelTwoSelecteOrRejected(db)
+	if err != nil {
+		log.Fatal(err)
+		return nil, 0, errors.New("An error occurred while fetching the data")
+	}
+	return handler.interviewDetails, len(handler.interviewDetails), nil
+}
+
+func (handler *InterviewHandler) GetSelectedCandidatesAtLevelOne(c *gin.Context, db *sql.DB) ([]models.Interview, int, error) {
+	var err error
+	handler = NewInterviewHandler(c, db)
+	handler.interviewDetails, err = handler.reader.ReadInterviewDataForLevelOneSelecteCandidates(db)
+	if err != nil {
+		log.Fatal(err)
+		return nil, 0, errors.New("An error occurred while fetching the data")
+	}
+	return handler.interviewDetails, len(handler.interviewDetails), nil
+}
+
+func (handler *InterviewHandler) GetRejectedCandidatesAtLevelOne(c *gin.Context, db *sql.DB) ([]models.Interview, int, error) {
+	var err error
+	handler = NewInterviewHandler(c, db)
+	handler.interviewDetails, err = handler.reader.ReadInterviewDataForLevelOneRejectedCandidates(db)
+	if err != nil {
+		log.Fatal(err)
+		return nil, 0, errors.New("An error occurred while fetching the data")
+	}
+	return handler.interviewDetails, len(handler.interviewDetails), nil
+}
+
+func (handler *InterviewHandler) GetSelectedCandidatesAtLevelTwo(c *gin.Context, db *sql.DB) ([]models.Interview, int, error) {
+	var err error
+	handler = NewInterviewHandler(c, db)
+	handler.interviewDetails, err = handler.reader.ReadInterviewDataForLevelTwoSelectedCandidates(db)
+	if err != nil {
+		log.Fatal(err)
+		return nil, 0, errors.New("An error occurred while fetching the data")
+	}
+	return handler.interviewDetails, len(handler.interviewDetails), nil
+}
+
+func (handler *InterviewHandler) GetRejectedCandidatesAtLevelTwo(c *gin.Context, db *sql.DB) ([]models.Interview, int, error) {
+	var err error
+	handler = NewInterviewHandler(c, db)
+	handler.interviewDetails, err = handler.reader.ReadInterviewDataForLevelTwoRejectedCandidates(db)
+	if err != nil {
+		log.Fatal(err)
+		return nil, 0, errors.New("An error occurred while fetching the data")
+	}
+	return handler.interviewDetails, len(handler.interviewDetails), nil
+}
+
+func (handler *InterviewHandler) GetSelectedCandidatesAtDMLevel(c *gin.Context, db *sql.DB) ([]models.Interview, int, error) {
+	var err error
+	handler = NewInterviewHandler(c, db)
+	handler.interviewDetails, err = handler.reader.ReadInterviewDataForDMLevelSelectedCandidates(db)
+	if err != nil {
+		log.Fatal(err)
+		return nil, 0, errors.New("An error occurred while fetching the data")
+	}
+	return handler.interviewDetails, len(handler.interviewDetails), nil
+}
+
+func (handler *InterviewHandler) GetRejectedCandidatesAtDMLevel(c *gin.Context, db *sql.DB) ([]models.Interview, int, error) {
+	var err error
+	handler = NewInterviewHandler(c, db)
+	handler.interviewDetails, err = handler.reader.ReadInterviewDataForDMLevelSelectedCandidates(db)
 	if err != nil {
 		log.Fatal(err)
 		return nil, 0, errors.New("An error occurred while fetching the data")
