@@ -34,7 +34,6 @@ func init() {
 	log.Println("Connected to database...")
 	DB = db
 	interviewHandler = new(handlers.InterviewHandler)
-	log.Println("created interviewHandler object", interviewHandler)
 }
 
 func GetSelectedAndRejectedCandidates(c *gin.Context) {
@@ -69,7 +68,7 @@ func GetSepecificCandidateDetails(c *gin.Context) {
 	selected, err2 := strconv.ParseBool(c.Query("selected"))
 	count, err3 := strconv.ParseBool(c.Query("count"))
 	if err != nil || err2 != nil || err3 != nil {
-		c.JSON(http.StatusNoContent, gin.H{"error": "problem reading url params..."})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "problem reading url params..."})
 	}
 
 	if level == 1 {
