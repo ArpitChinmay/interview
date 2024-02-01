@@ -1,12 +1,13 @@
 package dtomodels
 
 import (
-	"interview-dashboard/models"
 	"time"
+
+	"github.com/ArpitChinmay/interview/models"
 )
 
 type InterviewDTO struct {
-	CandidateId     string    `json:"candidateId"`
+	CandidateId     int       `json:"candidateId"`
 	InterviewStatus string    `json:"interviewStatus"`
 	L1Date          time.Time `json:"levelOneDate"`
 	L1Panel         string    `json:"levelOnePanel"`
@@ -20,41 +21,37 @@ type InterviewDTO struct {
 
 func (r InterviewDTO) MapInterviewDetails(databaseModel *models.Interview) InterviewDTO {
 	result := InterviewDTO{}
-	result.CandidateId = databaseModel.CandidateId
-	result.InterviewStatus = databaseModel.InterviewStatus
+	result.CandidateId = int(databaseModel.CandidateId.Int32)
+	result.InterviewStatus = databaseModel.InterviewStatus.String
 
-	l1date, err := time.Parse("YYYY-MM-DD HH:MM:SS", databaseModel.L1ScheduledDate)
-	if err != nil {
+	if databaseModel.L1ScheduledDate.Valid {
+		result.L1Date = databaseModel.L1ScheduledDate.Time
+	} else {
 		result.L1Date = time.Time{}
-	} else {
-		result.L1Date = l1date
 	}
-	result.L1Panel = databaseModel.L1Panel
+	result.L1Panel = databaseModel.L1Panel.String
 
-	l2date, err := time.Parse("YYYY-MM-DD HH:MM:SS", databaseModel.L2ScheduledDate)
-	if err != nil {
+	if databaseModel.L2ScheduledDate.Valid {
+		result.L2Date = databaseModel.L2ScheduledDate.Time
+	} else {
 		result.L2Date = time.Time{}
-	} else {
-		result.L2Date = l2date
 	}
-	result.L2Panel = databaseModel.L2Panel
+	result.L2Panel = databaseModel.L2Panel.String
 
-	dmdate, err := time.Parse("YYYY-MM-DD HH:MM:SS", databaseModel.DMScheduledDate)
-	if err != nil {
+	if databaseModel.DMScheduledDate.Valid {
+		result.DMDate = databaseModel.DMScheduledDate.Time
+	} else {
 		result.DMDate = time.Time{}
-	} else {
-		result.DMDate = dmdate
 	}
-	result.DMPanel = databaseModel.DMPanel
+	result.DMPanel = databaseModel.DMPanel.String
 
-	onboardingDate, err := time.Parse("YYYY-MM-DD HH:MM:SS", databaseModel.OnboardingDate)
-	if err != nil {
+	if databaseModel.OnboardingDate.Valid {
+		result.OnboardingDate = databaseModel.OnboardingDate.Time
+	} else {
 		result.OnboardingDate = time.Time{}
-	} else {
-		result.OnboardingDate = onboardingDate
 	}
 
-	result.Comments = databaseModel.Comments
+	result.Comments = databaseModel.Comments.String
 
 	return result
 }
