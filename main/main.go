@@ -19,6 +19,14 @@ func main() {
 	router := gin.Default()
 	router.GET("/db", GetSelectedAndRejectedCandidates)
 	router.GET("/db/:level/", GetSepecificCandidateDetails)
+	router.GET("/db/onboarded", GetOnboardedCandidateDetails)
+	//Kundan Kumar
+	router.GET("/db/interview-db/home/offer_rolled_out_accepted", GetCandidatesWithAcceptedOffers)
+	router.GET("/db/interview-db/home/offer_rolled_out_awaited", GetCandidatesWithAwaitedOffers)
+	router.GET("/db/interview-db/home/offer_rolled_out_accepted_count", GetAcceptedCandidatesCount)
+	router.GET("/db/interview-db/home/offer_rolled_out_awaited_count", GetAwaitedCandidatesCount)
+	router.POST("/home/admin", AddCandidate)
+	router.PUT("/home/admin/:id", UpdateCandidate)
 	router.Run(":5000")
 
 }
@@ -36,6 +44,7 @@ func init() {
 	interviewHandler = new(handlers.InterviewHandler)
 }
 
+// Arpit Chinmay & Shaik Saisameer
 func GetSelectedAndRejectedCandidates(c *gin.Context) {
 	level, err := strconv.ParseInt(c.Query("level"), 0, 32)
 	if err != nil {
@@ -57,12 +66,17 @@ func GetSelectedAndRejectedCandidates(c *gin.Context) {
 		}
 		c.JSON(http.StatusOK, detailsOfCandidatesDTO)
 	} else if level == 3 {
-		c.JSON(http.StatusNotImplemented, gin.H{"error:": "feature not implemented by me..."})
+		detailsOfCandidatesDTO, _, err := getCandidateInterviewDetailsAtLevelThree(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+		}
+		c.JSON(http.StatusOK, detailsOfCandidatesDTO)
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "wrong value for level param..."})
 	}
 }
 
+// Arpit Chinmay & Shaik Saisameer
 func GetSepecificCandidateDetails(c *gin.Context) {
 	level, err := strconv.ParseInt(c.Param("level"), 0, 32)
 	selected, err2 := strconv.ParseBool(c.Query("selected"))
@@ -167,6 +181,93 @@ func GetSepecificCandidateDetails(c *gin.Context) {
 	}
 }
 
+// Yellaling
+func GetOnboardedCandidateDetails(c *gin.Context) {
+	//onboarded, err1 := strconv.ParseBool(c.Query("onboarded"))
+	count, err2 := strconv.ParseBool(c.Query("count"))
+	if err2 != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "problem reading url params..."})
+	}
+	if count {
+		_, datacount, err := getOnboardedCandidateInterviewDetails(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+		}
+		c.JSON(http.StatusOK, datacount)
+	} else {
+		detailsOfCandidatesDTO, _, err := getOnboardedCandidateInterviewDetails(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+		}
+		c.JSON(http.StatusOK, detailsOfCandidatesDTO)
+	}
+}
+
+// Kundan Kumar
+func GetCandidatesWithAcceptedOffers(c *gin.Context) {
+	detailsOfCandidatesDTO, _, err := getCandidatesWithAcceptedOffers(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+	}
+	c.JSON(http.StatusOK, detailsOfCandidatesDTO)
+}
+
+func GetCandidatesWithAwaitedOffers(c *gin.Context) {
+	detailsOfCandidatesDTO, _, err := getCandidatesWithAwaitedOffers(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+	}
+	c.JSON(http.StatusOK, detailsOfCandidatesDTO)
+}
+
+func GetAcceptedCandidatesCount(c *gin.Context) {
+	_, count, err := getCandidatesWithAcceptedOffers(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+	}
+	c.JSON(http.StatusOK, count)
+}
+
+func GetAwaitedCandidatesCount(c *gin.Context) {
+	_, count, err := getCandidatesWithAwaitedOffers(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
+	}
+	c.JSON(http.StatusOK, count)
+}
+
+// SindhuShree KN
+func AddCandidate(c *gin.Context) {
+	log.Println("Are we even getting here?")
+	var candidate dtomodels.Candidate
+	if err := c.ShouldBindJSON(&candidate); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+
+	sqlResult, err := createNewInterviewCandidate(c, candidate)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	} else {
+		c.JSON(http.StatusCreated, sqlResult)
+	}
+}
+
+func UpdateCandidate(c *gin.Context) {
+	candidateId := c.Param("id")
+	var updateCandidate dtomodels.UpdateCandidate
+	if err := c.ShouldBindJSON(&updateCandidate); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+	sqlResult, err := updateInterviewCandidateData(c, updateCandidate, candidateId)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	} else {
+		c.JSON(http.StatusOK, sqlResult)
+	}
+}
+
 func getCandidateInterviewDetailsAtLevelOne(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
 	DetailsOfAllCandidates, count, err := interviewHandler.GetSelectedAndRejectedCandidatesAtLevelOne(c, DB)
@@ -185,6 +286,21 @@ func getCandidateInterviewDetailsAtLevelOne(c *gin.Context) ([]dtomodels.Intervi
 func getCandidateInterviewDetailsAtLevelTwo(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
 	DetailsOfAllCandidates, count, err := interviewHandler.GetSelectedAndRejectedCandidatesAtLevelTwo(c, DB)
+	if err != nil {
+		return detailsOfCandidatesDTO, 0, err
+	}
+
+	for _, candidate := range DetailsOfAllCandidates {
+		candidateDTO := dtomodels.InterviewDTO{}
+		result := candidateDTO.MapInterviewDetails(&candidate)
+		detailsOfCandidatesDTO = append(detailsOfCandidatesDTO, result)
+	}
+	return detailsOfCandidatesDTO, count, nil
+}
+
+func getCandidateInterviewDetailsAtLevelThree(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
+	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
+	DetailsOfAllCandidates, count, err := interviewHandler.GetSelectedAndRejectedCandidatesAtLevelThree(c, DB)
 	if err != nil {
 		return detailsOfCandidatesDTO, 0, err
 	}
@@ -285,4 +401,57 @@ func getRejectedCandidateInterviewDetailsAtLevelThree(c *gin.Context) ([]dtomode
 		detailsOfCandidatesDTO = append(detailsOfCandidatesDTO, result)
 	}
 	return detailsOfCandidatesDTO, count, nil
+}
+
+func getOnboardedCandidateInterviewDetails(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
+	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
+	DetailsOfAllCandidates, count, err := interviewHandler.GetOnboardedCandidates(c, DB)
+	if err != nil {
+		return detailsOfCandidatesDTO, 0, err
+	}
+
+	for _, candidate := range DetailsOfAllCandidates {
+		candidateDTO := dtomodels.InterviewDTO{}
+		result := candidateDTO.MapInterviewDetails(&candidate)
+		detailsOfCandidatesDTO = append(detailsOfCandidatesDTO, result)
+	}
+	return detailsOfCandidatesDTO, count, nil
+}
+
+func getCandidatesWithAcceptedOffers(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
+	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
+	DetailsOfAllCandidates, count, err := interviewHandler.GetCandidatesOfferedAndAccepted(c, DB)
+	if err != nil {
+		return detailsOfCandidatesDTO, 0, err
+	}
+	for _, candidate := range DetailsOfAllCandidates {
+		candidateDTO := dtomodels.InterviewDTO{}
+		result := candidateDTO.MapInterviewDetails(&candidate)
+		detailsOfCandidatesDTO = append(detailsOfCandidatesDTO, result)
+	}
+	return detailsOfCandidatesDTO, count, nil
+}
+
+func getCandidatesWithAwaitedOffers(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
+	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
+	DetailsOfAllCandidates, count, err := interviewHandler.GetCandidatesOfferedAndAwaited(c, DB)
+	if err != nil {
+		return detailsOfCandidatesDTO, 0, err
+	}
+	for _, candidate := range DetailsOfAllCandidates {
+		candidateDTO := dtomodels.InterviewDTO{}
+		result := candidateDTO.MapInterviewDetails(&candidate)
+		detailsOfCandidatesDTO = append(detailsOfCandidatesDTO, result)
+	}
+	return detailsOfCandidatesDTO, count, nil
+}
+
+func createNewInterviewCandidate(c *gin.Context, candidate dtomodels.Candidate) (sql.Result, error) {
+	response, err := interviewHandler.CreateNewInterviewCandidate(c, DB, candidate)
+	return response, err
+}
+
+func updateInterviewCandidateData(c *gin.Context, updatecandidate dtomodels.UpdateCandidate, candidateId string) (sql.Result, error) {
+	response, err := interviewHandler.UpdateInterviewCandidate(c, DB, updatecandidate, candidateId)
+	return response, err
 }

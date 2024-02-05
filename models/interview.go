@@ -3,8 +3,8 @@ package models
 import "database/sql"
 
 type Interview struct {
-	InterviewStatusId sql.NullInt32
-	CandidateId       sql.NullInt32
+	InterviewStatusId string
+	CandidateId       string
 	InterviewStatus   sql.NullString
 	L1ScheduledDate   sql.NullTime
 	L1Panel           sql.NullString
