@@ -1,12 +1,12 @@
-package datareader
+package repository
 
 import (
 	"database/sql"
 	"errors"
 	"log"
 
-	dtomodels "github.com/ArpitChinmay/interview/main/dtoModels"
 	"github.com/ArpitChinmay/interview/models"
+	dtomodels "github.com/ArpitChinmay/interview/models/dtoModels"
 )
 
 const (
@@ -274,19 +274,179 @@ const (
 	WHERE  CandidateId = ?;`
 )
 
-type DataReader struct {
-	database         *sql.DB
-	interviewDetails []models.Interview
+type Repository interface {
+	ReadInterviewDataForLevelOneSelecteOrRejected() (*[]models.Interview, error)
+	ReadInterviewDataForLevelTwoSelecteOrRejected() (*[]models.Interview, error)
+	ReadInterviewDataForLevelThreeSelecteOrRejected() (*[]models.Interview, error)
+	ReadInterviewDataForLevelOneSelecteCandidates() (*[]models.Interview, error)
+	ReadInterviewDataForLevelOneRejectedCandidates() (*[]models.Interview, error)
+	ReadInterviewDataForLevelTwoSelectedCandidates() (*[]models.Interview, error)
+	ReadInterviewDataForLevelTwoRejectedCandidates() (*[]models.Interview, error)
+	ReadInterviewDataForDMLevelSelectedCandidates() (*[]models.Interview, error)
+	ReadInterviewDataForDMLevelRejectedCandidates() (*[]models.Interview, error)
+	ReadInterviewDataForOnboardedCandidates() (*[]models.Interview, error)
+	ReadCandidatesOfferedAndAcceptedPosition() (*[]models.Interview, error)
+	ReadCandidatesOfferedAndAwaitedPosition() (*[]models.Interview, error)
+	CreateNewInterviewCandidate(*models.Resume) (sql.Result, error)
+	UpdateInterviewCandidate(*dtomodels.UpdateCandidate, *string) (sql.Result, error)
 }
 
-func NewDataReader(db *sql.DB) *DataReader {
-	return &DataReader{database: db, interviewDetails: make([]models.Interview, 0)}
+type repository struct {
+	database *sql.DB
 }
 
-func (datareader *DataReader) ReadInterviewDataForLevelOneSelecteOrRejected(db *sql.DB) ([]models.Interview, error) {
-	datareader = NewDataReader(db)
+func InitializeRepository(db *sql.DB) Repository {
+	return &repository{database: db}
+}
+
+func (repo *repository) ReadInterviewDataForLevelOneSelecteOrRejected() (*[]models.Interview, error) {
+	var interviewDetails []models.Interview
 	log.Println("Attempting to read the data from database...")
-	rows, err := datareader.database.Query(gET_SELECTE_REJECTED_CANDIDATE_AT_LEVEL_ONE)
+	rows, err := repo.database.Query(gET_SELECTE_REJECTED_CANDIDATE_AT_LEVEL_ONE)
+
+	if err != nil {
+		log.Println("error occurred while executing the read query in database...")
+		log.Fatal(err)
+		return nil, errors.New("There was an error encountered while trying to read the database...")
+	}
+
+	log.Println("rows data:")
+	for rows.Next() {
+		candidate := models.Interview{}
+		err = rows.Scan(&candidate.InterviewStatusId, &candidate.CandidateId, &candidate.InterviewStatus,
+			&candidate.L1ScheduledDate, &candidate.L1Panel, &candidate.L2ScheduledDate,
+			&candidate.L2Panel, &candidate.DMScheduledDate, &candidate.DMPanel, &candidate.OnboardingDate,
+			&candidate.Comments)
+
+		if err != nil {
+			log.Println("error reading the data into row...")
+			log.Fatal(err)
+			continue
+		}
+		interviewDetails = append(interviewDetails, candidate)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Println("Some error: ")
+		log.Println(err)
+	}
+
+	defer rows.Close()
+	return &interviewDetails, nil
+}
+
+func (repo *repository) ReadInterviewDataForLevelTwoSelecteOrRejected() (*[]models.Interview, error) {
+	var interviewDetails []models.Interview
+	log.Println("Attempting to read the data from database...")
+	rows, err := repo.database.Query(gET_SELECTED_REJECTED_CANDIDATE_AT_LEVEL_TWO)
+
+	if err != nil {
+		log.Println("error occurred while reading the database...")
+		log.Fatal(err)
+		return nil, errors.New("There was an error encountered while trying to read the database...")
+	}
+
+	log.Println("rows data:")
+	for rows.Next() {
+		candidate := models.Interview{}
+		err = rows.Scan(&candidate.InterviewStatusId, &candidate.CandidateId, &candidate.InterviewStatus,
+			&candidate.L1ScheduledDate, &candidate.L1Panel, &candidate.L2ScheduledDate,
+			&candidate.L2Panel, &candidate.DMScheduledDate, &candidate.DMPanel, &candidate.OnboardingDate,
+			&candidate.Comments)
+
+		if err != nil {
+			log.Println("error reading the data into rows...")
+			log.Fatal(err)
+			continue
+		}
+		interviewDetails = append(interviewDetails, candidate)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Println("Some error: ")
+		log.Println(err)
+	}
+
+	defer rows.Close()
+	return &interviewDetails, nil
+}
+
+func (repo *repository) ReadInterviewDataForLevelThreeSelecteOrRejected() (*[]models.Interview, error) {
+	var interviewDetails []models.Interview
+	log.Println("Attempting to read the data from database...")
+	rows, err := repo.database.Query(gET_SELECTED_REJECTED_CANDIDATE_AT_LEVEL_THREE)
+
+	if err != nil {
+		log.Println("error occurred while reading the database...")
+		log.Fatal(err)
+		return nil, errors.New("There was an error encountered while trying to read the database...")
+	}
+
+	log.Println("rows data:")
+	for rows.Next() {
+		candidate := models.Interview{}
+		err = rows.Scan(&candidate.InterviewStatusId, &candidate.CandidateId, &candidate.InterviewStatus,
+			&candidate.L1ScheduledDate, &candidate.L1Panel, &candidate.L2ScheduledDate,
+			&candidate.L2Panel, &candidate.DMScheduledDate, &candidate.DMPanel, &candidate.OnboardingDate,
+			&candidate.Comments)
+
+		if err != nil {
+			log.Println("error reading the data into rows...")
+			log.Fatal(err)
+			continue
+		}
+		interviewDetails = append(interviewDetails, candidate)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Println("Some error: ")
+		log.Println(err)
+	}
+
+	defer rows.Close()
+	return &interviewDetails, nil
+}
+
+func (repo *repository) ReadInterviewDataForLevelOneSelecteCandidates() (*[]models.Interview, error) {
+	var interviewDetails []models.Interview
+	log.Println("Attempting to read the data from database...")
+	rows, err := repo.database.Query(gET_SELECTED_CANDIDATE_AT_LEVEL_ONE)
+
+	if err != nil {
+		log.Println("error occurred while reading the database...")
+		log.Fatal(err)
+		return nil, errors.New("There was an error encountered while trying to read the database...")
+	}
+
+	log.Println("rows data:")
+	for rows.Next() {
+		candidate := models.Interview{}
+		err = rows.Scan(&candidate.InterviewStatusId, &candidate.CandidateId, &candidate.InterviewStatus,
+			&candidate.L1ScheduledDate, &candidate.L1Panel, &candidate.L2ScheduledDate,
+			&candidate.L2Panel, &candidate.DMScheduledDate, &candidate.DMPanel, &candidate.OnboardingDate,
+			&candidate.Comments)
+
+		if err != nil {
+			log.Println("error reading the data into rows...")
+			log.Fatal(err)
+			continue
+		}
+		interviewDetails = append(interviewDetails, candidate)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Println("Some error: ")
+		log.Println(err)
+	}
+
+	defer rows.Close()
+	return &interviewDetails, nil
+}
+
+func (repo *repository) ReadInterviewDataForLevelOneRejectedCandidates() (*[]models.Interview, error) {
+	var interviewDetails []models.Interview
+	log.Println("Attempting to read the data from database...")
+	rows, err := repo.database.Query(gET_REJECTED_CANDIDATE_AT_LEVEL_ONE)
 
 	if err != nil {
 		log.Println("error occurred while reading the database...")
@@ -307,7 +467,7 @@ func (datareader *DataReader) ReadInterviewDataForLevelOneSelecteOrRejected(db *
 			log.Fatal(err)
 			return nil, errors.New("There was an error reading the data from rows...")
 		}
-		datareader.interviewDetails = append(datareader.interviewDetails, candidate)
+		interviewDetails = append(interviewDetails, candidate)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -316,13 +476,13 @@ func (datareader *DataReader) ReadInterviewDataForLevelOneSelecteOrRejected(db *
 	}
 
 	defer rows.Close()
-	return datareader.interviewDetails, nil
+	return &interviewDetails, nil
 }
 
-func (datareader *DataReader) ReadInterviewDataForLevelTwoSelecteOrRejected(db *sql.DB) ([]models.Interview, error) {
-	datareader = NewDataReader(db)
+func (repo *repository) ReadInterviewDataForLevelTwoSelectedCandidates() (*[]models.Interview, error) {
+	var interviewDetails []models.Interview
 	log.Println("Attempting to read the data from database...")
-	rows, err := datareader.database.Query(gET_SELECTED_REJECTED_CANDIDATE_AT_LEVEL_TWO)
+	rows, err := repo.database.Query(gET_SELECTED_CANDIDATE_AT_LEVEL_TWO)
 
 	if err != nil {
 		log.Println("error occurred while reading the database...")
@@ -343,7 +503,7 @@ func (datareader *DataReader) ReadInterviewDataForLevelTwoSelecteOrRejected(db *
 			log.Fatal(err)
 			return nil, errors.New("There was an error reading the data from rows...")
 		}
-		datareader.interviewDetails = append(datareader.interviewDetails, candidate)
+		interviewDetails = append(interviewDetails, candidate)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -352,13 +512,13 @@ func (datareader *DataReader) ReadInterviewDataForLevelTwoSelecteOrRejected(db *
 	}
 
 	defer rows.Close()
-	return datareader.interviewDetails, nil
+	return &interviewDetails, nil
 }
 
-func (datareader *DataReader) ReadInterviewDataForLevelThreeSelecteOrRejected(db *sql.DB) ([]models.Interview, error) {
-	datareader = NewDataReader(db)
+func (repo *repository) ReadInterviewDataForLevelTwoRejectedCandidates() (*[]models.Interview, error) {
+	var interviewDetails []models.Interview
 	log.Println("Attempting to read the data from database...")
-	rows, err := datareader.database.Query(gET_SELECTED_REJECTED_CANDIDATE_AT_LEVEL_THREE)
+	rows, err := repo.database.Query(gET_REJECTED_CANDIDATE_AT_LEVEL_TWO)
 
 	if err != nil {
 		log.Println("error occurred while reading the database...")
@@ -379,7 +539,7 @@ func (datareader *DataReader) ReadInterviewDataForLevelThreeSelecteOrRejected(db
 			log.Fatal(err)
 			return nil, errors.New("There was an error reading the data from rows...")
 		}
-		datareader.interviewDetails = append(datareader.interviewDetails, candidate)
+		interviewDetails = append(interviewDetails, candidate)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -388,12 +548,13 @@ func (datareader *DataReader) ReadInterviewDataForLevelThreeSelecteOrRejected(db
 	}
 
 	defer rows.Close()
-	return datareader.interviewDetails, nil
+	return &interviewDetails, nil
 }
-func (datareader *DataReader) ReadInterviewDataForLevelOneSelecteCandidates(db *sql.DB) ([]models.Interview, error) {
-	datareader = NewDataReader(db)
+
+func (repo *repository) ReadInterviewDataForDMLevelSelectedCandidates() (*[]models.Interview, error) {
+	var interviewDetails []models.Interview
 	log.Println("Attempting to read the data from database...")
-	rows, err := datareader.database.Query(gET_SELECTED_CANDIDATE_AT_LEVEL_ONE)
+	rows, err := repo.database.Query(gET_SELECTED_CANDIDATE_AT_LEVEL_DM)
 
 	if err != nil {
 		log.Println("error occurred while reading the database...")
@@ -414,7 +575,7 @@ func (datareader *DataReader) ReadInterviewDataForLevelOneSelecteCandidates(db *
 			log.Fatal(err)
 			return nil, errors.New("There was an error reading the data from rows...")
 		}
-		datareader.interviewDetails = append(datareader.interviewDetails, candidate)
+		interviewDetails = append(interviewDetails, candidate)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -423,13 +584,13 @@ func (datareader *DataReader) ReadInterviewDataForLevelOneSelecteCandidates(db *
 	}
 
 	defer rows.Close()
-	return datareader.interviewDetails, nil
+	return &interviewDetails, nil
 }
 
-func (datareader *DataReader) ReadInterviewDataForLevelOneRejectedCandidates(db *sql.DB) ([]models.Interview, error) {
-	datareader = NewDataReader(db)
+func (repo *repository) ReadInterviewDataForDMLevelRejectedCandidates() (*[]models.Interview, error) {
+	var interviewDetails []models.Interview
 	log.Println("Attempting to read the data from database...")
-	rows, err := datareader.database.Query(gET_REJECTED_CANDIDATE_AT_LEVEL_ONE)
+	rows, err := repo.database.Query(gET_REJECTED_CANDIDATE_AT_LEVEL_DM)
 
 	if err != nil {
 		log.Println("error occurred while reading the database...")
@@ -450,7 +611,7 @@ func (datareader *DataReader) ReadInterviewDataForLevelOneRejectedCandidates(db 
 			log.Fatal(err)
 			return nil, errors.New("There was an error reading the data from rows...")
 		}
-		datareader.interviewDetails = append(datareader.interviewDetails, candidate)
+		interviewDetails = append(interviewDetails, candidate)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -459,13 +620,13 @@ func (datareader *DataReader) ReadInterviewDataForLevelOneRejectedCandidates(db 
 	}
 
 	defer rows.Close()
-	return datareader.interviewDetails, nil
+	return &interviewDetails, nil
 }
 
-func (datareader *DataReader) ReadInterviewDataForLevelTwoSelectedCandidates(db *sql.DB) ([]models.Interview, error) {
-	datareader = NewDataReader(db)
+func (repo *repository) ReadInterviewDataForOnboardedCandidates() (*[]models.Interview, error) {
+	var interviewDetails []models.Interview
 	log.Println("Attempting to read the data from database...")
-	rows, err := datareader.database.Query(gET_SELECTED_CANDIDATE_AT_LEVEL_TWO)
+	rows, err := repo.database.Query(gET_ONBOARDED_CANDIDATE_DETAILS)
 
 	if err != nil {
 		log.Println("error occurred while reading the database...")
@@ -486,7 +647,7 @@ func (datareader *DataReader) ReadInterviewDataForLevelTwoSelectedCandidates(db 
 			log.Fatal(err)
 			return nil, errors.New("There was an error reading the data from rows...")
 		}
-		datareader.interviewDetails = append(datareader.interviewDetails, candidate)
+		interviewDetails = append(interviewDetails, candidate)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -495,13 +656,13 @@ func (datareader *DataReader) ReadInterviewDataForLevelTwoSelectedCandidates(db 
 	}
 
 	defer rows.Close()
-	return datareader.interviewDetails, nil
+	return &interviewDetails, nil
 }
 
-func (datareader *DataReader) ReadInterviewDataForLevelTwoRejectedCandidates(db *sql.DB) ([]models.Interview, error) {
-	datareader = NewDataReader(db)
+func (repo *repository) ReadCandidatesOfferedAndAcceptedPosition() (*[]models.Interview, error) {
+	var interviewDetails []models.Interview
 	log.Println("Attempting to read the data from database...")
-	rows, err := datareader.database.Query(gET_REJECTED_CANDIDATE_AT_LEVEL_TWO)
+	rows, err := repo.database.Query(gET_OFFERED_AND_ACCEPTED_CANDIDATE_DETAILS)
 
 	if err != nil {
 		log.Println("error occurred while reading the database...")
@@ -522,7 +683,7 @@ func (datareader *DataReader) ReadInterviewDataForLevelTwoRejectedCandidates(db 
 			log.Fatal(err)
 			return nil, errors.New("There was an error reading the data from rows...")
 		}
-		datareader.interviewDetails = append(datareader.interviewDetails, candidate)
+		interviewDetails = append(interviewDetails, candidate)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -531,13 +692,13 @@ func (datareader *DataReader) ReadInterviewDataForLevelTwoRejectedCandidates(db 
 	}
 
 	defer rows.Close()
-	return datareader.interviewDetails, nil
+	return &interviewDetails, nil
 }
 
-func (datareader *DataReader) ReadInterviewDataForDMLevelSelectedCandidates(db *sql.DB) ([]models.Interview, error) {
-	datareader = NewDataReader(db)
+func (repo *repository) ReadCandidatesOfferedAndAwaitedPosition() (*[]models.Interview, error) {
+	var interviewDetails []models.Interview
 	log.Println("Attempting to read the data from database...")
-	rows, err := datareader.database.Query(gET_SELECTED_CANDIDATE_AT_LEVEL_DM)
+	rows, err := repo.database.Query(gET_OFFERED_AND_AWAITED_CANDIDATE_DETAILS)
 
 	if err != nil {
 		log.Println("error occurred while reading the database...")
@@ -558,7 +719,7 @@ func (datareader *DataReader) ReadInterviewDataForDMLevelSelectedCandidates(db *
 			log.Fatal(err)
 			return nil, errors.New("There was an error reading the data from rows...")
 		}
-		datareader.interviewDetails = append(datareader.interviewDetails, candidate)
+		interviewDetails = append(interviewDetails, candidate)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -567,158 +728,13 @@ func (datareader *DataReader) ReadInterviewDataForDMLevelSelectedCandidates(db *
 	}
 
 	defer rows.Close()
-	return datareader.interviewDetails, nil
+	return &interviewDetails, nil
 }
 
-func (datareader *DataReader) ReadInterviewDataForDMLevelRejectedCandidates(db *sql.DB) ([]models.Interview, error) {
-	datareader = NewDataReader(db)
-	log.Println("Attempting to read the data from database...")
-	rows, err := datareader.database.Query(gET_REJECTED_CANDIDATE_AT_LEVEL_DM)
-
-	if err != nil {
-		log.Println("error occurred while reading the database...")
-		log.Fatal(err)
-		return nil, errors.New("There was an error encountered while trying to read the database...")
-	}
-
-	log.Println("rows data:")
-	for rows.Next() {
-		candidate := models.Interview{}
-		err = rows.Scan(&candidate.InterviewStatusId, &candidate.CandidateId, &candidate.InterviewStatus,
-			&candidate.L1ScheduledDate, &candidate.L1Panel, &candidate.L2ScheduledDate,
-			&candidate.L2Panel, &candidate.DMScheduledDate, &candidate.DMPanel, &candidate.OnboardingDate,
-			&candidate.Comments)
-
-		if err != nil {
-			log.Println("error reading the data into rows...")
-			log.Fatal(err)
-			return nil, errors.New("There was an error reading the data from rows...")
-		}
-		datareader.interviewDetails = append(datareader.interviewDetails, candidate)
-	}
-
-	if err = rows.Err(); err != nil {
-		log.Println("Some error: ")
-		log.Println(err)
-	}
-
-	defer rows.Close()
-	return datareader.interviewDetails, nil
-}
-
-func (datareader *DataReader) ReadInterviewDataForOnboardedCandidates(db *sql.DB) ([]models.Interview, error) {
-	datareader = NewDataReader(db)
-	log.Println("Attempting to read the data from database...")
-	rows, err := datareader.database.Query(gET_ONBOARDED_CANDIDATE_DETAILS)
-
-	if err != nil {
-		log.Println("error occurred while reading the database...")
-		log.Fatal(err)
-		return nil, errors.New("There was an error encountered while trying to read the database...")
-	}
-
-	log.Println("rows data:")
-	for rows.Next() {
-		candidate := models.Interview{}
-		err = rows.Scan(&candidate.InterviewStatusId, &candidate.CandidateId, &candidate.InterviewStatus,
-			&candidate.L1ScheduledDate, &candidate.L1Panel, &candidate.L2ScheduledDate,
-			&candidate.L2Panel, &candidate.DMScheduledDate, &candidate.DMPanel, &candidate.OnboardingDate,
-			&candidate.Comments)
-
-		if err != nil {
-			log.Println("error reading the data into rows...")
-			log.Fatal(err)
-			return nil, errors.New("There was an error reading the data from rows...")
-		}
-		datareader.interviewDetails = append(datareader.interviewDetails, candidate)
-	}
-
-	if err = rows.Err(); err != nil {
-		log.Println("Some error: ")
-		log.Println(err)
-	}
-
-	defer rows.Close()
-	return datareader.interviewDetails, nil
-}
-
-func (datareader *DataReader) ReadCandidatesOfferedAndAcceptedPosition(db *sql.DB) ([]models.Interview, error) {
-	datareader = NewDataReader(db)
-	log.Println("Attempting to read the data from database...")
-	rows, err := datareader.database.Query(gET_OFFERED_AND_ACCEPTED_CANDIDATE_DETAILS)
-
-	if err != nil {
-		log.Println("error occurred while reading the database...")
-		log.Fatal(err)
-		return nil, errors.New("There was an error encountered while trying to read the database...")
-	}
-
-	log.Println("rows data:")
-	for rows.Next() {
-		candidate := models.Interview{}
-		err = rows.Scan(&candidate.InterviewStatusId, &candidate.CandidateId, &candidate.InterviewStatus,
-			&candidate.L1ScheduledDate, &candidate.L1Panel, &candidate.L2ScheduledDate,
-			&candidate.L2Panel, &candidate.DMScheduledDate, &candidate.DMPanel, &candidate.OnboardingDate,
-			&candidate.Comments)
-
-		if err != nil {
-			log.Println("error reading the data into rows...")
-			log.Fatal(err)
-			return nil, errors.New("There was an error reading the data from rows...")
-		}
-		datareader.interviewDetails = append(datareader.interviewDetails, candidate)
-	}
-
-	if err = rows.Err(); err != nil {
-		log.Println("Some error: ")
-		log.Println(err)
-	}
-
-	defer rows.Close()
-	return datareader.interviewDetails, nil
-}
-
-func (datareader *DataReader) ReadCandidatesOfferedAndAwaitedPosition(db *sql.DB) ([]models.Interview, error) {
-	datareader = NewDataReader(db)
-	log.Println("Attempting to read the data from database...")
-	rows, err := datareader.database.Query(gET_OFFERED_AND_AWAITED_CANDIDATE_DETAILS)
-
-	if err != nil {
-		log.Println("error occurred while reading the database...")
-		log.Fatal(err)
-		return nil, errors.New("There was an error encountered while trying to read the database...")
-	}
-
-	log.Println("rows data:")
-	for rows.Next() {
-		candidate := models.Interview{}
-		err = rows.Scan(&candidate.InterviewStatusId, &candidate.CandidateId, &candidate.InterviewStatus,
-			&candidate.L1ScheduledDate, &candidate.L1Panel, &candidate.L2ScheduledDate,
-			&candidate.L2Panel, &candidate.DMScheduledDate, &candidate.DMPanel, &candidate.OnboardingDate,
-			&candidate.Comments)
-
-		if err != nil {
-			log.Println("error reading the data into rows...")
-			log.Fatal(err)
-			return nil, errors.New("There was an error reading the data from rows...")
-		}
-		datareader.interviewDetails = append(datareader.interviewDetails, candidate)
-	}
-
-	if err = rows.Err(); err != nil {
-		log.Println("Some error: ")
-		log.Println(err)
-	}
-
-	defer rows.Close()
-	return datareader.interviewDetails, nil
-}
-
-func (datareader *DataReader) CreateNewInterviewCandidate(db *sql.DB, resume models.Resume) (sql.Result, error) {
-	datareader = NewDataReader(db)
+func (repo *repository) CreateNewInterviewCandidate(resume *models.Resume) (sql.Result, error) {
 	log.Println("Attempting to write the data to database...")
 
-	response, err := datareader.database.Exec(iNSERT_NEW_INTERVIEW_CANDIDATE, resume.ResumeID, resume.CandidateID, resume.Skill_Category,
+	response, err := repo.database.Exec(iNSERT_NEW_INTERVIEW_CANDIDATE, resume.ResumeID, resume.CandidateID, resume.Skill_Category,
 		resume.Name, resume.Mobile, resume.Email_ID, resume.Total_Experience, resume.Relevant_Experience, resume.Current_Company,
 		resume.Notice_Period, resume.Comments, resume.Screening_Status, resume.Date)
 
@@ -729,14 +745,13 @@ func (datareader *DataReader) CreateNewInterviewCandidate(db *sql.DB, resume mod
 	return response, err
 }
 
-func (datareader *DataReader) UpdateInterviewCandidate(db *sql.DB, updateCandidate dtomodels.UpdateCandidate, candidateId string) (sql.Result, error) {
-	datareader = NewDataReader(db)
+func (repo *repository) UpdateInterviewCandidate(updateCandidate *dtomodels.UpdateCandidate, candidateId *string) (sql.Result, error) {
 	log.Println("Attempting to update the data in database...")
 
-	responseResumeUpdate, err := datareader.database.Exec(uPDATE_RESUME_SCREENING_STATUS, updateCandidate.ScreeningStatus, updateCandidate.Date, candidateId)
+	responseResumeUpdate, err := repo.database.Exec(uPDATE_RESUME_SCREENING_STATUS, updateCandidate.ScreeningStatus, updateCandidate.Date, candidateId)
 	log.Println("Resume update successfull")
 
-	responseInterviewUpdate, err2 := datareader.database.Exec(uPDATE_INTERVIEW_DATA, updateCandidate.InterviewStatus, updateCandidate.L1Date, updateCandidate.L1Panel, updateCandidate.L2Date, updateCandidate.L2Panel,
+	responseInterviewUpdate, err2 := repo.database.Exec(uPDATE_INTERVIEW_DATA, updateCandidate.InterviewStatus, updateCandidate.L1Date, updateCandidate.L1Panel, updateCandidate.L2Date, updateCandidate.L2Panel,
 		updateCandidate.DMDate, updateCandidate.DMPanel, candidateId)
 	log.Println("Interview update successful...")
 	if err != nil || err2 != nil {
@@ -747,7 +762,7 @@ func (datareader *DataReader) UpdateInterviewCandidate(db *sql.DB, updateCandida
 		log.Println("Interview update resposne: ", responseInterviewUpdate)
 	}
 
-	interviewData, err := datareader.database.Exec(gET_CANDIDATE_INTERVIEW_DETAILS, candidateId)
+	interviewData, err := repo.database.Exec(gET_CANDIDATE_INTERVIEW_DETAILS, candidateId)
 	return interviewData, err
 }
 

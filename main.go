@@ -6,42 +6,19 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ArpitChinmay/interview/handlers"
-	dtomodels "github.com/ArpitChinmay/interview/main/dtoModels"
+	dtomodels "github.com/ArpitChinmay/interview/setup/dtoModels"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 )
 
-var DB *sql.DB
-var interviewHandler *handlers.InterviewHandler
+var serve *ServerObject
 
 func main() {
-	router := gin.Default()
-	router.GET("/db", GetSelectedAndRejectedCandidates)
-	router.GET("/db/:level/", GetSepecificCandidateDetails)
-	router.GET("/db/onboarded", GetOnboardedCandidateDetails)
-	//Kundan Kumar
-	router.GET("/db/interview-db/home/offer_rolled_out_accepted", GetCandidatesWithAcceptedOffers)
-	router.GET("/db/interview-db/home/offer_rolled_out_awaited", GetCandidatesWithAwaitedOffers)
-	router.GET("/db/interview-db/home/offer_rolled_out_accepted_count", GetAcceptedCandidatesCount)
-	router.GET("/db/interview-db/home/offer_rolled_out_awaited_count", GetAwaitedCandidatesCount)
-	router.POST("/home/admin", AddCandidate)
-	router.PUT("/home/admin/:id", UpdateCandidate)
-	router.Run(":5000")
-
-}
-
-func init() {
-	db, err := sql.Open("mysql", "root:admin@tcp(127.0.0.1:3306)/int_db_data?parseTime=true")
-
-	if err != nil {
-		log.Println("could not connect to the database...")
-		log.Fatal(err)
-	}
-
-	log.Println("Connected to database...")
-	DB = db
-	interviewHandler = new(handlers.InterviewHandler)
+	// The SetupServer() method opens a db connection
+	// and registers the routes.
+	var ginEngine *gin.Engine
+	serve, ginEngine = SetupServer()
+	ginEngine.Run(":5000")
 }
 
 // Arpit Chinmay & Shaik Saisameer
@@ -270,12 +247,12 @@ func UpdateCandidate(c *gin.Context) {
 
 func getCandidateInterviewDetailsAtLevelOne(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
-	DetailsOfAllCandidates, count, err := interviewHandler.GetSelectedAndRejectedCandidatesAtLevelOne(c, DB)
+	DetailsOfAllCandidates, count, err := serve.handler.GetSelectedAndRejectedCandidatesAtLevelOne(c)
 	if err != nil {
 		return detailsOfCandidatesDTO, 0, err
 	}
 
-	for _, candidate := range DetailsOfAllCandidates {
+	for _, candidate := range *DetailsOfAllCandidates {
 		candidateDTO := dtomodels.InterviewDTO{}
 		result := candidateDTO.MapInterviewDetails(&candidate)
 		detailsOfCandidatesDTO = append(detailsOfCandidatesDTO, result)
@@ -285,12 +262,12 @@ func getCandidateInterviewDetailsAtLevelOne(c *gin.Context) ([]dtomodels.Intervi
 
 func getCandidateInterviewDetailsAtLevelTwo(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
-	DetailsOfAllCandidates, count, err := interviewHandler.GetSelectedAndRejectedCandidatesAtLevelTwo(c, DB)
+	DetailsOfAllCandidates, count, err := serve.handler.GetSelectedAndRejectedCandidatesAtLevelTwo(c)
 	if err != nil {
 		return detailsOfCandidatesDTO, 0, err
 	}
 
-	for _, candidate := range DetailsOfAllCandidates {
+	for _, candidate := range *DetailsOfAllCandidates {
 		candidateDTO := dtomodels.InterviewDTO{}
 		result := candidateDTO.MapInterviewDetails(&candidate)
 		detailsOfCandidatesDTO = append(detailsOfCandidatesDTO, result)
@@ -300,12 +277,12 @@ func getCandidateInterviewDetailsAtLevelTwo(c *gin.Context) ([]dtomodels.Intervi
 
 func getCandidateInterviewDetailsAtLevelThree(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
-	DetailsOfAllCandidates, count, err := interviewHandler.GetSelectedAndRejectedCandidatesAtLevelThree(c, DB)
+	DetailsOfAllCandidates, count, err := serve.handler.GetSelectedAndRejectedCandidatesAtLevelThree(c)
 	if err != nil {
 		return detailsOfCandidatesDTO, 0, err
 	}
 
-	for _, candidate := range DetailsOfAllCandidates {
+	for _, candidate := range *DetailsOfAllCandidates {
 		candidateDTO := dtomodels.InterviewDTO{}
 		result := candidateDTO.MapInterviewDetails(&candidate)
 		detailsOfCandidatesDTO = append(detailsOfCandidatesDTO, result)
@@ -315,12 +292,12 @@ func getCandidateInterviewDetailsAtLevelThree(c *gin.Context) ([]dtomodels.Inter
 
 func getSelectedCandidateInterviewDetailsAtLevelOne(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
-	DetailsOfAllCandidates, count, err := interviewHandler.GetSelectedCandidatesAtLevelOne(c, DB)
+	DetailsOfAllCandidates, count, err := serve.handler.GetSelectedCandidatesAtLevelOne(c)
 	if err != nil {
 		return detailsOfCandidatesDTO, 0, err
 	}
 
-	for _, candidate := range DetailsOfAllCandidates {
+	for _, candidate := range *DetailsOfAllCandidates {
 		candidateDTO := dtomodels.InterviewDTO{}
 		result := candidateDTO.MapInterviewDetails(&candidate)
 		detailsOfCandidatesDTO = append(detailsOfCandidatesDTO, result)
@@ -330,12 +307,12 @@ func getSelectedCandidateInterviewDetailsAtLevelOne(c *gin.Context) ([]dtomodels
 
 func getRejectedCandidateInterviewDetailsAtLevelOne(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
-	DetailsOfAllCandidates, count, err := interviewHandler.GetRejectedCandidatesAtLevelOne(c, DB)
+	DetailsOfAllCandidates, count, err := serve.handler.GetRejectedCandidatesAtLevelOne(c)
 	if err != nil {
 		return detailsOfCandidatesDTO, 0, err
 	}
 
-	for _, candidate := range DetailsOfAllCandidates {
+	for _, candidate := range *DetailsOfAllCandidates {
 		candidateDTO := dtomodels.InterviewDTO{}
 		result := candidateDTO.MapInterviewDetails(&candidate)
 		detailsOfCandidatesDTO = append(detailsOfCandidatesDTO, result)
@@ -345,12 +322,12 @@ func getRejectedCandidateInterviewDetailsAtLevelOne(c *gin.Context) ([]dtomodels
 
 func getSelectedCandidateInterviewDetailsAtLevelTwo(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
-	DetailsOfAllCandidates, count, err := interviewHandler.GetSelectedCandidatesAtLevelTwo(c, DB)
+	DetailsOfAllCandidates, count, err := serve.handler.GetSelectedCandidatesAtLevelTwo(c)
 	if err != nil {
 		return detailsOfCandidatesDTO, 0, err
 	}
 
-	for _, candidate := range DetailsOfAllCandidates {
+	for _, candidate := range *DetailsOfAllCandidates {
 		candidateDTO := dtomodels.InterviewDTO{}
 		result := candidateDTO.MapInterviewDetails(&candidate)
 		detailsOfCandidatesDTO = append(detailsOfCandidatesDTO, result)
@@ -360,12 +337,12 @@ func getSelectedCandidateInterviewDetailsAtLevelTwo(c *gin.Context) ([]dtomodels
 
 func getRejectedCandidateInterviewDetailsAtLevelTwo(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
-	DetailsOfAllCandidates, count, err := interviewHandler.GetRejectedCandidatesAtLevelTwo(c, DB)
+	DetailsOfAllCandidates, count, err := serve.handler.GetRejectedCandidatesAtLevelTwo(c)
 	if err != nil {
 		return detailsOfCandidatesDTO, 0, err
 	}
 
-	for _, candidate := range DetailsOfAllCandidates {
+	for _, candidate := range *DetailsOfAllCandidates {
 		candidateDTO := dtomodels.InterviewDTO{}
 		result := candidateDTO.MapInterviewDetails(&candidate)
 		detailsOfCandidatesDTO = append(detailsOfCandidatesDTO, result)
@@ -375,12 +352,12 @@ func getRejectedCandidateInterviewDetailsAtLevelTwo(c *gin.Context) ([]dtomodels
 
 func getSelectedCandidateInterviewDetailsAtLevelThree(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
-	DetailsOfAllCandidates, count, err := interviewHandler.GetSelectedCandidatesAtDMLevel(c, DB)
+	DetailsOfAllCandidates, count, err := serve.handler.GetSelectedCandidatesAtDMLevel(c)
 	if err != nil {
 		return detailsOfCandidatesDTO, 0, err
 	}
 
-	for _, candidate := range DetailsOfAllCandidates {
+	for _, candidate := range *DetailsOfAllCandidates {
 		candidateDTO := dtomodels.InterviewDTO{}
 		result := candidateDTO.MapInterviewDetails(&candidate)
 		detailsOfCandidatesDTO = append(detailsOfCandidatesDTO, result)
@@ -390,12 +367,12 @@ func getSelectedCandidateInterviewDetailsAtLevelThree(c *gin.Context) ([]dtomode
 
 func getRejectedCandidateInterviewDetailsAtLevelThree(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
-	DetailsOfAllCandidates, count, err := interviewHandler.GetRejectedCandidatesAtDMLevel(c, DB)
+	DetailsOfAllCandidates, count, err := serve.handler.GetRejectedCandidatesAtDMLevel(c)
 	if err != nil {
 		return detailsOfCandidatesDTO, 0, err
 	}
 
-	for _, candidate := range DetailsOfAllCandidates {
+	for _, candidate := range *DetailsOfAllCandidates {
 		candidateDTO := dtomodels.InterviewDTO{}
 		result := candidateDTO.MapInterviewDetails(&candidate)
 		detailsOfCandidatesDTO = append(detailsOfCandidatesDTO, result)
@@ -405,12 +382,12 @@ func getRejectedCandidateInterviewDetailsAtLevelThree(c *gin.Context) ([]dtomode
 
 func getOnboardedCandidateInterviewDetails(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
-	DetailsOfAllCandidates, count, err := interviewHandler.GetOnboardedCandidates(c, DB)
+	DetailsOfAllCandidates, count, err := serve.handler.GetOnboardedCandidates(c)
 	if err != nil {
 		return detailsOfCandidatesDTO, 0, err
 	}
 
-	for _, candidate := range DetailsOfAllCandidates {
+	for _, candidate := range *DetailsOfAllCandidates {
 		candidateDTO := dtomodels.InterviewDTO{}
 		result := candidateDTO.MapInterviewDetails(&candidate)
 		detailsOfCandidatesDTO = append(detailsOfCandidatesDTO, result)
@@ -420,11 +397,11 @@ func getOnboardedCandidateInterviewDetails(c *gin.Context) ([]dtomodels.Intervie
 
 func getCandidatesWithAcceptedOffers(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
-	DetailsOfAllCandidates, count, err := interviewHandler.GetCandidatesOfferedAndAccepted(c, DB)
+	DetailsOfAllCandidates, count, err := serve.handler.GetCandidatesOfferedAndAccepted(c)
 	if err != nil {
 		return detailsOfCandidatesDTO, 0, err
 	}
-	for _, candidate := range DetailsOfAllCandidates {
+	for _, candidate := range *DetailsOfAllCandidates {
 		candidateDTO := dtomodels.InterviewDTO{}
 		result := candidateDTO.MapInterviewDetails(&candidate)
 		detailsOfCandidatesDTO = append(detailsOfCandidatesDTO, result)
@@ -434,11 +411,11 @@ func getCandidatesWithAcceptedOffers(c *gin.Context) ([]dtomodels.InterviewDTO, 
 
 func getCandidatesWithAwaitedOffers(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
-	DetailsOfAllCandidates, count, err := interviewHandler.GetCandidatesOfferedAndAwaited(c, DB)
+	DetailsOfAllCandidates, count, err := serve.handler.GetCandidatesOfferedAndAwaited(c)
 	if err != nil {
 		return detailsOfCandidatesDTO, 0, err
 	}
-	for _, candidate := range DetailsOfAllCandidates {
+	for _, candidate := range *DetailsOfAllCandidates {
 		candidateDTO := dtomodels.InterviewDTO{}
 		result := candidateDTO.MapInterviewDetails(&candidate)
 		detailsOfCandidatesDTO = append(detailsOfCandidatesDTO, result)
@@ -447,11 +424,11 @@ func getCandidatesWithAwaitedOffers(c *gin.Context) ([]dtomodels.InterviewDTO, i
 }
 
 func createNewInterviewCandidate(c *gin.Context, candidate dtomodels.Candidate) (sql.Result, error) {
-	response, err := interviewHandler.CreateNewInterviewCandidate(c, DB, candidate)
-	return response, err
+	response, err := serve.handler.CreateNewInterviewCandidate(c, candidate)
+	return *response, err
 }
 
 func updateInterviewCandidateData(c *gin.Context, updatecandidate dtomodels.UpdateCandidate, candidateId string) (sql.Result, error) {
-	response, err := interviewHandler.UpdateInterviewCandidate(c, DB, updatecandidate, candidateId)
-	return response, err
+	response, err := serve.handler.UpdateInterviewCandidate(c, updatecandidate, candidateId)
+	return *response, err
 }
