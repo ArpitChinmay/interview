@@ -7,7 +7,7 @@ import (
 )
 
 type InterviewDTO struct {
-	CandidateId     int       `json:"candidateId"`
+	CandidateId     string    `json:"candidateId"`
 	InterviewStatus string    `json:"interviewStatus"`
 	L1Date          time.Time `json:"levelOneDate"`
 	L1Panel         string    `json:"levelOnePanel"`
@@ -21,7 +21,7 @@ type InterviewDTO struct {
 
 func (r InterviewDTO) MapInterviewDetails(databaseModel *models.Interview) InterviewDTO {
 	result := InterviewDTO{}
-	result.CandidateId = int(databaseModel.CandidateId.Int32)
+	result.CandidateId = databaseModel.CandidateId
 	result.InterviewStatus = databaseModel.InterviewStatus.String
 
 	if databaseModel.L1ScheduledDate.Valid {

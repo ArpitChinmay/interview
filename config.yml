@@ -1,0 +1,11 @@
+server: 5000
+
+database:
+  dbprovider: "mysql"
+  username: "root"
+  pwd: "admin"
+  protocol: "tcp"
+  address: "127.0.0.1"
+  dbport: "3306"
+  dbname: "int_db_data"
+  parseTime: "true"
