@@ -1,5 +1,3 @@
-server: 5000
-
 database:
   dbprovider: "mysql"
   username: "root"

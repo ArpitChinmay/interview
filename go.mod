@@ -7,8 +7,6 @@ require (
 	github.com/stretchr/testify v1.8.4 // indirect
 )
 
-require github.com/go-sql-driver/mysql v1.7.1
-
 require (
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
@@ -40,3 +38,5 @@ require (
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/yaml.v3 v3.0.1
 )
+
+require github.com/go-sql-driver/mysql v1.7.1 // indirect

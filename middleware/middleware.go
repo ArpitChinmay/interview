@@ -1,4 +1,4 @@
-package handlers
+package middleware
 
 import (
 	"database/sql"
@@ -7,7 +7,8 @@ import (
 
 	"github.com/ArpitChinmay/interview/models"
 	dtomodels "github.com/ArpitChinmay/interview/models/dtoModels"
-	repository "github.com/ArpitChinmay/interview/repositories"
+	"github.com/ArpitChinmay/interview/repositories"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,7 +33,7 @@ type InterviewMiddleware interface {
 	UpdateInterviewCandidate(c *gin.Context, updateCandidate dtomodels.UpdateCandidate, candidateId string) (*sql.Result, error)
 }
 
-func InitializeInterviewMiddleware(repository repository.Repository) InterviewMiddleware {
+func InitializeInterviewMiddleware(repository repositories.Repository) InterviewMiddleware {
 	return &interviewMiddleware{repository}
 }
 

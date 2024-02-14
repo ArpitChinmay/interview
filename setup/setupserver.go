@@ -1,41 +1,37 @@
-package main
+package setup
 
 import (
 	"database/sql"
 	"log"
 	"os"
 
-	"github.com/ArpitChinmay/interview/handlers"
 	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
 	"gopkg.in/yaml.v3"
 )
 
-type Config struct {
-	database struct {
-		dbprovider string `yaml:"dbprovider"`
-		username   string `yaml:"username"`
-		pwd        string `yaml:"pwd"`
-		protocol   string `yaml:"protocol"`
-		address    string `yaml:"address"`
-		dbport     string `yaml:"dbport"`
-		dbname     string `yaml:"dbname"`
-		parseTime  string `yaml:"parseTime"`
-	}
+type databaseconfig struct {
+	Dbprovider string `yaml:"dbprovider"`
+	Username   string `yaml:"username"`
+	Pwd        string `yaml:"pwd"`
+	Protocol   string `yaml:"protocol"`
+	Address    string `yaml:"address"`
+	Dbport     string `yaml:"dbport"`
+	Dbname     string `yaml:"dbname"`
+	ParseTime  string `yaml:"parseTime"`
 }
 
-type ServerObject struct {
-	handler handlers.InterviewHandler
-}
-
-func SetupServer() (*ServerObject, *gin.Engine) {
+func SetupServer() {
 	log.Println("Setting up server...")
 	router := gin.New()
 	gin.SetMode(gin.Default().TrustedPlatform)
 	db := setupDBServer()
-	registerRoutes(router)
-	// create a object to use db data without exposing it to outside users.
-	server := &ServerObject{handler: handlers.NewInterviewHandler(db)}
-	return server, router
+	repos := SetupRepositories(db)
+	midware := SetupMiddleware(repos)
+	handler := SetupHandler(midware)
+
+	registerRoutes(router, handler)
+	router.Run(":5000")
 }
 
 func setupDBServer() *sql.DB {
@@ -54,34 +50,31 @@ func setupDBServer() *sql.DB {
 }
 
 func getConnectionString() (string, string) {
-	configFile, err := os.Open("config.yml")
+	file, err := os.ReadFile("config.yml")
 	if err != nil {
+		log.Fatal("Error reading config file:", err)
 		panic(err)
 	}
 
-	defer configFile.Close()
-
-	decoder := yaml.NewDecoder(configFile)
-	var databaseconfig Config
-	if err := decoder.Decode(&databaseconfig); err != nil {
-		panic(err)
+	config := make(map[string]databaseconfig)
+	if err := yaml.Unmarshal(file, &config); err != nil {
+		log.Fatal("Error unmarshalling YAML file:", err)
 	}
 
-	dbprovider := databaseconfig.database.dbprovider
-	connectionString := databaseconfig.database.username + ":" + databaseconfig.database.pwd + "@" + databaseconfig.database.protocol + "(" + databaseconfig.database.address + ")/" + databaseconfig.database.dbname + "?" + "parseTime=" + databaseconfig.database.parseTime
-
-	return dbprovider, connectionString
+	connectionString := config["database"].Username + ":" + config["database"].Pwd + "@" + config["database"].Protocol + "(" + config["database"].Address + ":" + config["database"].Dbport + ")/" + config["database"].Dbname + "?" + "parseTime=" + config["database"].ParseTime
+	log.Println("connetion string:", connectionString)
+	return config["database"].Dbprovider, connectionString
 }
 
-func registerRoutes(router *gin.Engine) {
-	router.GET("/db", GetSelectedAndRejectedCandidates)
-	router.GET("/db/:level/", GetSepecificCandidateDetails)
-	router.GET("/db/onboarded", GetOnboardedCandidateDetails)
+func registerRoutes(router *gin.Engine, handler *HandlerGenerator) {
+	router.GET("/db", handler.InterviewHandler.GetSelectedAndRejectedCandidates)
+	router.GET("/db/:level/", handler.InterviewHandler.GetSepecificCandidateDetails)
+	router.GET("/db/onboarded", handler.InterviewHandler.GetOnboardedCandidateDetails)
 	//Kundan Kumar
-	router.GET("/db/interview-db/home/offer_rolled_out_accepted", GetCandidatesWithAcceptedOffers)
-	router.GET("/db/interview-db/home/offer_rolled_out_awaited", GetCandidatesWithAwaitedOffers)
-	router.GET("/db/interview-db/home/offer_rolled_out_accepted_count", GetAcceptedCandidatesCount)
-	router.GET("/db/interview-db/home/offer_rolled_out_awaited_count", GetAwaitedCandidatesCount)
-	router.POST("/home/admin", AddCandidate)
-	router.PUT("/home/admin/:id", UpdateCandidate)
+	router.GET("/db/interview-db/home/offer_rolled_out_accepted", handler.InterviewHandler.GetCandidatesWithAcceptedOffers)
+	router.GET("/db/interview-db/home/offer_rolled_out_awaited", handler.InterviewHandler.GetCandidatesWithAwaitedOffers)
+	router.GET("/db/interview-db/home/offer_rolled_out_accepted_count", handler.InterviewHandler.GetAcceptedCandidatesCount)
+	router.GET("/db/interview-db/home/offer_rolled_out_awaited_count", handler.InterviewHandler.GetAwaitedCandidatesCount)
+	router.POST("/home/admin", handler.InterviewHandler.AddCandidate)
+	router.PUT("/home/admin/:id", handler.InterviewHandler.UpdateCandidate)
 }

@@ -6,15 +6,16 @@ import (
 	"net/http"
 	"strconv"
 
+	middleware "github.com/ArpitChinmay/interview/middleware"
 	dtomodels "github.com/ArpitChinmay/interview/models/dtoModels"
 	"github.com/gin-gonic/gin"
 )
 
-type handler struct {
+type interviewHandler struct {
 	midware middleware.InterviewMiddleware
 }
 
-type Handler interface {
+type InterviewHandler interface {
 	GetSelectedAndRejectedCandidates(c *gin.Context)
 	GetSepecificCandidateDetails(c *gin.Context)
 	GetOnboardedCandidateDetails(c *gin.Context)
@@ -26,12 +27,12 @@ type Handler interface {
 	UpdateCandidate(c *gin.Context)
 }
 
-func InitializeHandler(midware middleware.InterviewMiddleware) {
-	return &handler{midware}
+func InitializeHandler(midware middleware.InterviewMiddleware) InterviewHandler {
+	return &interviewHandler{midware}
 }
 
 // Arpit Chinmay & Shaik Saisameer
-func (handler *handler) GetSelectedAndRejectedCandidates(c *gin.Context) {
+func (handler interviewHandler) GetSelectedAndRejectedCandidates(c *gin.Context) {
 	level, err := strconv.ParseInt(c.Query("level"), 0, 32)
 	if err != nil {
 		c.JSON(http.StatusNoContent, gin.H{"error": "problem reading url params..."})
@@ -63,7 +64,7 @@ func (handler *handler) GetSelectedAndRejectedCandidates(c *gin.Context) {
 }
 
 // Arpit Chinmay & Shaik Saisameer
-func (handler *handler) GetSepecificCandidateDetails(c *gin.Context) {
+func (handler interviewHandler) GetSepecificCandidateDetails(c *gin.Context) {
 	level, err := strconv.ParseInt(c.Param("level"), 0, 32)
 	selected, err2 := strconv.ParseBool(c.Query("selected"))
 	count, err3 := strconv.ParseBool(c.Query("count"))
@@ -168,7 +169,7 @@ func (handler *handler) GetSepecificCandidateDetails(c *gin.Context) {
 }
 
 // Yellaling
-func (handler *handler) GetOnboardedCandidateDetails(c *gin.Context) {
+func (handler *interviewHandler) GetOnboardedCandidateDetails(c *gin.Context) {
 	//onboarded, err1 := strconv.ParseBool(c.Query("onboarded"))
 	count, err2 := strconv.ParseBool(c.Query("count"))
 	if err2 != nil {
@@ -190,7 +191,7 @@ func (handler *handler) GetOnboardedCandidateDetails(c *gin.Context) {
 }
 
 // Kundan Kumar
-func (handler *handler) GetCandidatesWithAcceptedOffers(c *gin.Context) {
+func (handler *interviewHandler) GetCandidatesWithAcceptedOffers(c *gin.Context) {
 	detailsOfCandidatesDTO, _, err := handler.getCandidatesWithAcceptedOffers(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
@@ -198,7 +199,7 @@ func (handler *handler) GetCandidatesWithAcceptedOffers(c *gin.Context) {
 	c.JSON(http.StatusOK, detailsOfCandidatesDTO)
 }
 
-func (handler *handler) GetCandidatesWithAwaitedOffers(c *gin.Context) {
+func (handler *interviewHandler) GetCandidatesWithAwaitedOffers(c *gin.Context) {
 	detailsOfCandidatesDTO, _, err := handler.getCandidatesWithAwaitedOffers(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
@@ -206,7 +207,7 @@ func (handler *handler) GetCandidatesWithAwaitedOffers(c *gin.Context) {
 	c.JSON(http.StatusOK, detailsOfCandidatesDTO)
 }
 
-func (handler *handler) GetAcceptedCandidatesCount(c *gin.Context) {
+func (handler *interviewHandler) GetAcceptedCandidatesCount(c *gin.Context) {
 	_, count, err := handler.getCandidatesWithAcceptedOffers(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
@@ -214,7 +215,7 @@ func (handler *handler) GetAcceptedCandidatesCount(c *gin.Context) {
 	c.JSON(http.StatusOK, count)
 }
 
-func (handler *handler) GetAwaitedCandidatesCount(c *gin.Context) {
+func (handler *interviewHandler) GetAwaitedCandidatesCount(c *gin.Context) {
 	_, count, err := handler.getCandidatesWithAwaitedOffers(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "some error occurred..."})
@@ -223,7 +224,7 @@ func (handler *handler) GetAwaitedCandidatesCount(c *gin.Context) {
 }
 
 // SindhuShree KN
-func (handler *handler) AddCandidate(c *gin.Context) {
+func (handler *interviewHandler) AddCandidate(c *gin.Context) {
 	log.Println("Are we even getting here?")
 	var candidate dtomodels.Candidate
 	if err := c.ShouldBindJSON(&candidate); err != nil {
@@ -239,7 +240,7 @@ func (handler *handler) AddCandidate(c *gin.Context) {
 	}
 }
 
-func (handler *handler) UpdateCandidate(c *gin.Context) {
+func (handler *interviewHandler) UpdateCandidate(c *gin.Context) {
 	candidateId := c.Param("id")
 	var updateCandidate dtomodels.UpdateCandidate
 	if err := c.ShouldBindJSON(&updateCandidate); err != nil {
@@ -254,9 +255,9 @@ func (handler *handler) UpdateCandidate(c *gin.Context) {
 	}
 }
 
-func (handler *handler) getCandidateInterviewDetailsAtLevelOne(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
+func (handler *interviewHandler) getCandidateInterviewDetailsAtLevelOne(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
-	DetailsOfAllCandidates, count, err := handler.midware.midwareGetSelectedAndRejectedCandidatesAtLevelOne(c)
+	DetailsOfAllCandidates, count, err := handler.midware.GetSelectedAndRejectedCandidatesAtLevelOne(c)
 	if err != nil {
 		return detailsOfCandidatesDTO, 0, err
 	}
@@ -269,7 +270,7 @@ func (handler *handler) getCandidateInterviewDetailsAtLevelOne(c *gin.Context) (
 	return detailsOfCandidatesDTO, count, nil
 }
 
-func (handler *handler) getCandidateInterviewDetailsAtLevelTwo(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
+func (handler *interviewHandler) getCandidateInterviewDetailsAtLevelTwo(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
 	DetailsOfAllCandidates, count, err := handler.midware.GetSelectedAndRejectedCandidatesAtLevelTwo(c)
 	if err != nil {
@@ -284,7 +285,7 @@ func (handler *handler) getCandidateInterviewDetailsAtLevelTwo(c *gin.Context) (
 	return detailsOfCandidatesDTO, count, nil
 }
 
-func (handler *handler) getCandidateInterviewDetailsAtLevelThree(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
+func (handler *interviewHandler) getCandidateInterviewDetailsAtLevelThree(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
 	DetailsOfAllCandidates, count, err := handler.midware.GetSelectedAndRejectedCandidatesAtLevelThree(c)
 	if err != nil {
@@ -299,7 +300,7 @@ func (handler *handler) getCandidateInterviewDetailsAtLevelThree(c *gin.Context)
 	return detailsOfCandidatesDTO, count, nil
 }
 
-func (handler *handler) getSelectedCandidateInterviewDetailsAtLevelOne(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
+func (handler *interviewHandler) getSelectedCandidateInterviewDetailsAtLevelOne(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
 	DetailsOfAllCandidates, count, err := handler.midware.GetSelectedCandidatesAtLevelOne(c)
 	if err != nil {
@@ -314,7 +315,7 @@ func (handler *handler) getSelectedCandidateInterviewDetailsAtLevelOne(c *gin.Co
 	return detailsOfCandidatesDTO, count, nil
 }
 
-func (handler *handler) getRejectedCandidateInterviewDetailsAtLevelOne(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
+func (handler *interviewHandler) getRejectedCandidateInterviewDetailsAtLevelOne(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
 	DetailsOfAllCandidates, count, err := handler.midware.GetRejectedCandidatesAtLevelOne(c)
 	if err != nil {
@@ -329,7 +330,7 @@ func (handler *handler) getRejectedCandidateInterviewDetailsAtLevelOne(c *gin.Co
 	return detailsOfCandidatesDTO, count, nil
 }
 
-func (handler *handler) getSelectedCandidateInterviewDetailsAtLevelTwo(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
+func (handler *interviewHandler) getSelectedCandidateInterviewDetailsAtLevelTwo(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
 	DetailsOfAllCandidates, count, err := handler.midware.GetSelectedCandidatesAtLevelTwo(c)
 	if err != nil {
@@ -344,7 +345,7 @@ func (handler *handler) getSelectedCandidateInterviewDetailsAtLevelTwo(c *gin.Co
 	return detailsOfCandidatesDTO, count, nil
 }
 
-func (handler *handler) getRejectedCandidateInterviewDetailsAtLevelTwo(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
+func (handler *interviewHandler) getRejectedCandidateInterviewDetailsAtLevelTwo(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
 	DetailsOfAllCandidates, count, err := handler.midware.GetRejectedCandidatesAtLevelTwo(c)
 	if err != nil {
@@ -359,7 +360,7 @@ func (handler *handler) getRejectedCandidateInterviewDetailsAtLevelTwo(c *gin.Co
 	return detailsOfCandidatesDTO, count, nil
 }
 
-func (handler *handler) getSelectedCandidateInterviewDetailsAtLevelThree(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
+func (handler *interviewHandler) getSelectedCandidateInterviewDetailsAtLevelThree(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
 	DetailsOfAllCandidates, count, err := handler.midware.GetSelectedCandidatesAtDMLevel(c)
 	if err != nil {
@@ -374,7 +375,7 @@ func (handler *handler) getSelectedCandidateInterviewDetailsAtLevelThree(c *gin.
 	return detailsOfCandidatesDTO, count, nil
 }
 
-func (handler *handler) getRejectedCandidateInterviewDetailsAtLevelThree(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
+func (handler *interviewHandler) getRejectedCandidateInterviewDetailsAtLevelThree(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
 	DetailsOfAllCandidates, count, err := handler.midware.GetRejectedCandidatesAtDMLevel(c)
 	if err != nil {
@@ -389,7 +390,7 @@ func (handler *handler) getRejectedCandidateInterviewDetailsAtLevelThree(c *gin.
 	return detailsOfCandidatesDTO, count, nil
 }
 
-func (handler *handler) getOnboardedCandidateInterviewDetails(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
+func (handler *interviewHandler) getOnboardedCandidateInterviewDetails(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
 	DetailsOfAllCandidates, count, err := handler.midware.GetOnboardedCandidates(c)
 	if err != nil {
@@ -404,7 +405,7 @@ func (handler *handler) getOnboardedCandidateInterviewDetails(c *gin.Context) ([
 	return detailsOfCandidatesDTO, count, nil
 }
 
-func (handler *handler) getCandidatesWithAcceptedOffers(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
+func (handler *interviewHandler) getCandidatesWithAcceptedOffers(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
 	DetailsOfAllCandidates, count, err := handler.midware.GetCandidatesOfferedAndAccepted(c)
 	if err != nil {
@@ -418,7 +419,7 @@ func (handler *handler) getCandidatesWithAcceptedOffers(c *gin.Context) ([]dtomo
 	return detailsOfCandidatesDTO, count, nil
 }
 
-func (handler *handler) getCandidatesWithAwaitedOffers(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
+func (handler *interviewHandler) getCandidatesWithAwaitedOffers(c *gin.Context) ([]dtomodels.InterviewDTO, int, error) {
 	detailsOfCandidatesDTO := []dtomodels.InterviewDTO{}
 	DetailsOfAllCandidates, count, err := handler.midware.GetCandidatesOfferedAndAwaited(c)
 	if err != nil {
@@ -432,12 +433,12 @@ func (handler *handler) getCandidatesWithAwaitedOffers(c *gin.Context) ([]dtomod
 	return detailsOfCandidatesDTO, count, nil
 }
 
-func (handler *handler) createNewInterviewCandidate(c *gin.Context, candidate dtomodels.Candidate) (sql.Result, error) {
+func (handler *interviewHandler) createNewInterviewCandidate(c *gin.Context, candidate dtomodels.Candidate) (sql.Result, error) {
 	response, err := handler.midware.CreateNewInterviewCandidate(c, candidate)
 	return *response, err
 }
 
-func (handler *handler) updateInterviewCandidateData(c *gin.Context, updatecandidate dtomodels.UpdateCandidate, candidateId string) (sql.Result, error) {
+func (handler *interviewHandler) updateInterviewCandidateData(c *gin.Context, updatecandidate dtomodels.UpdateCandidate, candidateId string) (sql.Result, error) {
 	response, err := handler.midware.UpdateInterviewCandidate(c, updatecandidate, candidateId)
 	return *response, err
 }
